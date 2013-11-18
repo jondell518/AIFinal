@@ -58,60 +58,40 @@ World.prototype.generateMap = function()
 		this.squares[i] = [];
 		for(var j = 0; j <this.height; j++)
 		{
-			var last = 0;
-			var twolast = 1;
-
-			if(j > 2)
-			{
-				last = this.squares[i][j-1].type;
-				twolast = this.squares[i][j-2].type;
-			}
-			else if(j == 1 && i >0)
-			{
-				last = this.squares[i][j-1].type;
-				twolast = this.squares[i-1][15].type;
-			}
-			else if(j ==0 && i > 1)
-			{
-				last = this.squares[i-1][15].type;
-				twolast = this.squares[i-1][14].type;
-			}
-
-			if(last != twolast)
-			{
-				 picked = this.types[Math.round(Math.random()*3)];
-			}
-			else if(last == twolast)
-			{
-				var prob = Math.round(Math.random()*100);
-				
-				if(prob == 20)
-				{
-					 picked = last;
-					 console.log(prob);
-				}
-				else if(prob > 20)
-				{
-					var prob2 = Math.round(Math.random()*3);
-					while(prob2 != last)
-					{
-						prob2 = Math.round(Math.random()*3);
-					}
-					 picked = prob2;
-				}
-			}
-			this.squares[i][j] = new square(i,j,picked);
-			
+			this.squares[i][j] = new square(i,j,0);	
 		}
 	}
+
+
+	//generate 10 blocks of each type of tile
+	for(var i =0; i< 10; i++)
+	{
+		var waterX = Math.floor(Math.random()*32);
+		var waterY = Math.floor(Math.random()*16);
+		var mountainX = Math.floor(Math.random()*32);
+		var mountainY = Math.floor(Math.random()*16);
+		var forestX = Math.floor(Math.random()*32);
+		var forestY = Math.floor(Math.random()*16);
+
+		this.squares[waterX][waterY].type = 2;
+		this.addTiles(waterX,waterY,2);
+		this.squares[mountainX][mountainY].type = 1;
+		this.addTiles(mountainX,mountainY,1);
+		this.squares[forestX][forestY].type = 3;
+		this.addTiles(forestX,forestY, 3);
+		
+		
+	}
 }
+	
+
+
+
+
 
 World.prototype.update = function()
 {
 
-
-
-	
 	for(var i =0; i < this.squares.length; i++)
 	{
 		for(var j =0; j < this.squares[i].length; j++)
@@ -138,11 +118,21 @@ World.prototype.update = function()
 			
 		}
 	}
+}
 
-
-
-
-
+World.prototype.addTiles = function(X,Y,type)
+{
+	if(X > 0 && X < 31 && Y > 1 && Y < 15)
+	{
+		this.squares[X-1][Y].type =type;
+		this.squares[X-1][Y-1].type = type;
+		this.squares[X-1][Y+1].type = type;
+		this.squares[X][Y+1].type = type;
+		this.squares[X][Y-1].type = type;
+		this.squares[X+1][Y].type = type;
+		this.squares[X+1][Y+1].type = type;
+		this.squares[X+1][Y-1].type = type;
+	}
 }
 
 var world = new World();
