@@ -1,20 +1,69 @@
-
-var X = 800;
-var Y = 600;
-var c = document.getElementById("mycanvas");
-var ctx = c.getContext("2d");
-
-
-
-
 var squareDim = 50;
 var squareOffset = 2;
 
 var squares = [];
+var tracks = [];
+var trackCounter = 0;
 var playerCost = 0;
 
-var rndX =0;
-var rndY = 0;
+var startX =0;
+var startY = 0;
+
+var endX = 0;
+var endY = 0;
+
+var stage = new PIXI.Stage(0x000000, true);
+var renderer = new PIXI.CanvasRenderer(1660, 830);
+stage.click = function(data)
+{
+	console.log("clicked!");
+	var indexX = Math.floor(data.global.x/(squareDim+squareOffset));
+	var indexY = Math.floor(data.global.y/(squareDim+squareOffset));
+	if(areAdjacent(indexX,indexY,tracks))
+	{
+		if(indexX == endX && indexY == endY)
+		{
+			console.log("YOU WIN");
+			
+			// Add text.
+    		var text = new PIXI.Text("YOU WON YOUR TOTAL COST WAS: $" + playerCost, {font: 'bold 40px Avro', fill: 'white', align: 'center'});
+    		text.position = new PIXI.Point(renderer.width / 2, renderer.height / 2);
+    		text.anchor = new PIXI.Point(0.5, 0.5);
+    		graphics.beginFill(0x000000);
+    		graphics.drawRect(0,0, renderer.width, renderer.height);
+    		stage.addChild(text);
+
+    		// Render the stage.
+   			renderer.render(stage);
+			console.log(playerCost);
+		}
+		else
+		{
+			squares[indexX][indexY].draw(0x838B8B);
+ 			playerCost += squares[indexX][indexY].cost;
+ 			tracks[trackCounter] = indexX;
+ 			tracks[trackCounter+1] = indexY;
+ 			trackCounter+=2;
+		}
+		
+	}
+}
+        
+      
+        
+        // add render view to DOM
+        document.body.appendChild(renderer.view);
+        
+        var graphics = new PIXI.Graphics();
+        stage.addChild(graphics);
+        
+        requestAnimFrame(animate);
+
+        function animate() {
+
+        renderer.render(stage);
+        requestAnimFrame( animate );
+        }
 
 
 
@@ -29,10 +78,19 @@ var square = function(x,y,type)
 
 	this.draw = function(color)
 	{
-		ctx.fillStyle = color;
+		graphics.beginFill(color)
 		var posX = this.x*(squareDim+squareOffset);
         var posY = this.y*(squareDim+squareOffset);
-        ctx.fillRect(posX,posY,squareDim, squareDim);
+        graphics.drawRect(posX,posY,squareDim, squareDim);
+	}
+}
+
+
+var areAdjacent = function(X, Y, tracks)
+{
+	if(Math.abs(X - tracks[trackCounter-2]) <= 1 && Math.abs(Y-tracks[trackCounter-1]) <= 1)
+	{
+		return true;
 	}
 }
 var World = function()
@@ -55,16 +113,11 @@ var World = function()
 	this.drawMap();
 	console.log("MAP DRAWN");
 	this.generateStart();
+	tracks[trackCounter] = startX;
+	tracks[trackCounter+1] = startY;
+	trackCounter+=2;
 	this.generateGoal();
 	console.log("START AND END GENERATED");
-
-	c.addEventListener('click',function(evt){
-    	var indexX = Math.floor(evt.clientX/(squareDim+squareOffset));
-    	var indexY = Math.floor(evt.clientY/(squareDim+squareOffset));
-   	 	squares[indexX][indexY].draw("#838B8B");
-   	 	playerCost += squares[indexX][indexY].cost;
-   	});
-
 }
 
 World.prototype.generateMap = function()
@@ -82,7 +135,7 @@ World.prototype.generateMap = function()
 
 
 	//generate 10 blocks of each type of tile, rest are flat
-	for(var i =0; i< 10; i++)
+	for(var i =0; i< 20; i++)
 	{
 		var waterX = Math.floor(Math.random()*32);
 		var waterY = Math.floor(Math.random()*16);
@@ -114,13 +167,13 @@ World.prototype.generateStart = function()
 	var notFound = false;
 	while(!notFound)
 	{
-		rndX = Math.floor(Math.random()*this.width);
-		rndY = Math.floor(Math.random()*this.height);
+		startX = Math.floor(Math.random()*this.width);
+		startY = Math.floor(Math.random()*this.height);
 
-		if(rndX == 0 || rndY == 0 || rndX == this.width-1 || rndY == this.height-1)
+		if(startX == 0 || startY == 0 || startX == this.width-1 || startY == this.height-1)
 		{
 			notFound = true;
-			squares[rndX][rndY].draw("#838B8B");
+			squares[startX][startY].draw(0X838B8B);
 		}
 	}
 }
@@ -130,15 +183,15 @@ World.prototype.generateGoal = function()
 	var notFound = false;
 	while(!notFound)
 	{
-		var newRX = Math.floor(Math.random()*32);
-		var newRY = Math.floor(Math.random()*16);
+		endX = Math.floor(Math.random()*32);
+		endY = Math.floor(Math.random()*16);
 
-		if(newRX != rndX && newRY != rndY)
+		if(endX != startX && endY != startY)
 		{
-			if(newRX == 0 || newRY == 0 || newRX == this.width-1 || newRY == this.height-1)
+			if(endX == 0 || endY == 0 || endX == this.width-1 || endY == this.height-1)
 			{
 				notFound = true;
-				squares[newRX][newRY].draw("#838B8B");
+				squares[endX][endY].draw(0X838B8B);
 			}
 		}
 
@@ -160,23 +213,23 @@ World.prototype.drawMap = function()
 		{
 			if(this.squares[i][j].type == 0)
 			{
-				this.squares[i][j].draw('#01a05f');
+				this.squares[i][j].draw(0x01a05f);
 				
 			}
 			else if(this.squares[i][j].type == 1)
 			{
 				
-				this.squares[i][j].draw('#002013');
+				this.squares[i][j].draw(0x002013);
 			}
 			else if(this.squares[i][j].type == 2)
 			{
 				
-				this.squares[i][j].draw('#310c0c');
+				this.squares[i][j].draw(0x310c0c);
 			}
 			else if(this.squares[i][j].type == 3)
 			{
 				
-				this.squares[i][j].draw('#2cabe2');
+				this.squares[i][j].draw(0x2cabe2);
 			}
 		}
 	}
