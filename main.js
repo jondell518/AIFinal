@@ -20,10 +20,6 @@ var lastX = 0;
 var lastY = 1;
 
 var gameOver = false;
-
-
-// var world = new World();
-console.log(World);
 var stage = new PIXI.Stage(0x000000, true);
 var renderer = new PIXI.CanvasRenderer(1660, 830);
 stage.click = function(data)
@@ -121,6 +117,94 @@ var areAdjacent = function(X, Y, tracks)
 		return true;
 	}
 }
+
+
+/*var node = function(state, parent, stepCost)
+{
+	this.state = state;
+	this.parent = parent;
+	this.cost = stepCost;
+}
+
+
+var search = function()
+{
+
+
+	this.fringe = [];
+	this.expanded = [];
+	this.totalCost = 0;
+	this.solution = false;
+	this.cutOff = 0;
+
+	this.findSolution = function(start)
+	{
+		var startNode = new node(start, null, 0);
+
+		this.fringe.push(startNode);
+
+		while(!this.solution || !this.cutOff <= 10)
+		{
+			var fringeIndex = this.chooseFromFringe();
+
+			var currentNode = this.fringe[fringeIndex];
+			this.totalCost += currentNode.cost;
+			this.cutOff++;
+
+
+
+
+			//Checks to make sure that the new nodes won't be outside the array
+			if(currentNode.state.x-1 > 0 && currentNode.state.y-1 > 0)
+			{
+				//Adds these nodes to the fringe if it passes the first if statement
+				this.fringe.push(new node(squares[currentNode.state.x-1][currentNode.state.y-1],currentNode,squares[currentNode.state.x-1][currentNode.state.y-1].cost));
+				this.fringe.push(new node(squares[currentNode.state.x-1][currentNode.state.y],currentNode,squares[currentNode.state.x-1][currentNode.state.y].cost));
+				this.fringe.push(new node(squares[currentNode.state.x][currentNode.state.y-1],currentNode,squares[currentNode.state.x][currentNode.state.y-1].cost));
+				if(currentNode.state.x+1 < world.width && currentNode.state.y+1 < world.height)
+				{
+	
+	
+						//Adds these nodes to the fringe if it passes the second if statement
+						this.fringe.push(new node(squares[currentNode.state.x-1][currentNode.state.y+1],currentNode,squares[currentNode.state.x-1][currentNode.state.y+1].cost));
+						this.fringe.push(new node(squares[currentNode.state.x][currentNode.state.y+1],currentNode,squares[currentNode.state.x][currentNode.state.y+1].cost));
+						this.fringe.push(new node(squares[currentNode.state.x+1][currentNode.state.y],currentNode,squares[currentNode.state.x+1][currentNode.state.y].cost));
+						this.fringe.push(new node(squares[currentNode.state.x+1][currentNode.state.y-1],currentNode,squares[currentNode.state.x+1][currentNode.state.y-1].cost));
+						this.fringe.push(new node(squares[currentNode.state.x+1][currentNode.state.y+1],currentNode,squares[currentNode.state.x+1][currentNode.state.y+1].cost));
+				}
+			}
+		}	
+	}
+
+		
+
+	this.chooseFromFringe = function()
+	{
+
+		/*var INDEX =0;
+		for(var i = 0; i< this.fringe.length; i++)
+		{
+			if(this.fringe[i].state.x == endX && this.fringe[i].state.y == endY)
+			{
+				this.solution = true;
+				INDEX =i;
+			}
+
+		}
+		return INDEX;
+		//Creates a random number to use as the index in the fringe
+		var randIndex = Math.floor(Math.random()*this.fringe.length);
+		//console.log(randIndex);
+		if(this.fringe[randIndex].state.x == endX && this.fringe[randIndex].state.y == endY)
+		{
+			this.solution = true;
+		}
+		return randIndex;
+
+	}
+}*/
+
+
 var World = function()
 {
 	//Sets up the world, by generating a random map
@@ -133,6 +217,8 @@ var World = function()
 
 	//number of cells high
 	this.height = 16;
+
+	// this.search = new search();
 
 	
 	this.generateMap();
@@ -220,10 +306,11 @@ World.prototype.generateGoal = function()
 			{
 				notFound = true;
 				squares[endX][endY].draw(0xfff000)
+
+
+				// this.search.findSolution(squares[startX][startY]);
 			}
 		}
-
-		
 	}
 }
 	
