@@ -3,10 +3,12 @@ var squareOffset = 2;
 
 var squares = [];
 var tracks = [];
+var AItracks = [];
 var trackCounter = 0;
+var AItrackCounter = 0;
 var playerCost = 0;
 
-var frameDelay = 90;
+var frameDelay = 30;
 var frameCount = 0;
 var trainCounter = 0;
 
@@ -27,7 +29,7 @@ stage.click = function(data)
 	
 	var indexX = Math.floor(data.global.x/(squareDim+squareOffset));
 	var indexY = Math.floor(data.global.y/(squareDim+squareOffset));
-	if(areAdjacent(indexX,indexY,tracks))
+	if(areAdjacent(indexX,indexY,tracks, trackCounter))
 	{
 		if(indexX == endX && indexY == endY)
 		{
@@ -58,36 +60,35 @@ stage.click = function(data)
         
         requestAnimFrame(animate);
 
-        function animate() {
-        if(frameCount == frameDelay)
-        {
-        	world.moveTrain();
-        	frameCount = 0;
-        }
-        
-        renderer.render(stage);
-        if(!gameOver)
-        {
-        	requestAnimFrame( animate );
-        	frameCount++;
-        }
-        else 
-        {
+function animate() {
+    if(frameCount == frameDelay)
+    {
+    	world.moveTrain();
+    	frameCount = 0;
+    }
+    
+    renderer.render(stage);
+    if(!gameOver)
+    {
+    	requestAnimFrame( animate );
+    	frameCount++;
+    }
+    else 
+    {
 
-			// Add text.
-    		var text = new PIXI.Text("YOU WON YOUR TOTAL COST WAS: $" + playerCost, {font: 'bold 40px Avro', fill: 'white', align: 'center'});
-    		text.position = new PIXI.Point(renderer.width / 2, renderer.height / 2);
-    		text.anchor = new PIXI.Point(0.5, 0.5);
-    		graphics.beginFill(0x000000);
-    		graphics.drawRect(0,0, renderer.width, renderer.height);
-    		stage.addChild(text);
+		// Add text.
+		var text = new PIXI.Text("YOU WON YOUR TOTAL COST WAS: $" + playerCost, {font: 'bold 40px Avro', fill: 'white', align: 'center'});
+		text.position = new PIXI.Point(renderer.width / 2, renderer.height / 2);
+		text.anchor = new PIXI.Point(0.5, 0.5);
+		graphics.beginFill(0x000000);
+		graphics.drawRect(0,0, renderer.width, renderer.height);
+		stage.addChild(text);
 
-    		// Render the stage.
-   			renderer.render(stage);
-			console.log(playerCost);
-        }
-             
-        }
+		// Render the stage.
+		renderer.render(stage);
+		console.log(playerCost);
+    }          
+}
 
 
 
@@ -110,7 +111,7 @@ var square = function(x,y,type)
 }
 
 
-var areAdjacent = function(X, Y, tracks)
+var areAdjacent = function(X, Y, tracks, trackCounter)
 {
 	if(Math.abs(X - tracks[trackCounter-2]) <= 1 && Math.abs(Y-tracks[trackCounter-1]) <= 1)
 	{
@@ -119,90 +120,7 @@ var areAdjacent = function(X, Y, tracks)
 }
 
 
-/*var node = function(state, parent, stepCost)
-{
-	this.state = state;
-	this.parent = parent;
-	this.cost = stepCost;
-}
 
-
-var search = function()
-{
-
-
-	this.fringe = [];
-	this.expanded = [];
-	this.totalCost = 0;
-	this.solution = false;
-	this.cutOff = 0;
-
-	this.findSolution = function(start)
-	{
-		var startNode = new node(start, null, 0);
-
-		this.fringe.push(startNode);
-
-		while(!this.solution || !this.cutOff <= 10)
-		{
-			var fringeIndex = this.chooseFromFringe();
-
-			var currentNode = this.fringe[fringeIndex];
-			this.totalCost += currentNode.cost;
-			this.cutOff++;
-
-
-
-
-			//Checks to make sure that the new nodes won't be outside the array
-			if(currentNode.state.x-1 > 0 && currentNode.state.y-1 > 0)
-			{
-				//Adds these nodes to the fringe if it passes the first if statement
-				this.fringe.push(new node(squares[currentNode.state.x-1][currentNode.state.y-1],currentNode,squares[currentNode.state.x-1][currentNode.state.y-1].cost));
-				this.fringe.push(new node(squares[currentNode.state.x-1][currentNode.state.y],currentNode,squares[currentNode.state.x-1][currentNode.state.y].cost));
-				this.fringe.push(new node(squares[currentNode.state.x][currentNode.state.y-1],currentNode,squares[currentNode.state.x][currentNode.state.y-1].cost));
-				if(currentNode.state.x+1 < world.width && currentNode.state.y+1 < world.height)
-				{
-	
-	
-						//Adds these nodes to the fringe if it passes the second if statement
-						this.fringe.push(new node(squares[currentNode.state.x-1][currentNode.state.y+1],currentNode,squares[currentNode.state.x-1][currentNode.state.y+1].cost));
-						this.fringe.push(new node(squares[currentNode.state.x][currentNode.state.y+1],currentNode,squares[currentNode.state.x][currentNode.state.y+1].cost));
-						this.fringe.push(new node(squares[currentNode.state.x+1][currentNode.state.y],currentNode,squares[currentNode.state.x+1][currentNode.state.y].cost));
-						this.fringe.push(new node(squares[currentNode.state.x+1][currentNode.state.y-1],currentNode,squares[currentNode.state.x+1][currentNode.state.y-1].cost));
-						this.fringe.push(new node(squares[currentNode.state.x+1][currentNode.state.y+1],currentNode,squares[currentNode.state.x+1][currentNode.state.y+1].cost));
-				}
-			}
-		}	
-	}
-
-		
-
-	this.chooseFromFringe = function()
-	{
-
-		/*var INDEX =0;
-		for(var i = 0; i< this.fringe.length; i++)
-		{
-			if(this.fringe[i].state.x == endX && this.fringe[i].state.y == endY)
-			{
-				this.solution = true;
-				INDEX =i;
-			}
-
-		}
-		return INDEX;
-		//Creates a random number to use as the index in the fringe
-		var randIndex = Math.floor(Math.random()*this.fringe.length);
-		//console.log(randIndex);
-		if(this.fringe[randIndex].state.x == endX && this.fringe[randIndex].state.y == endY)
-		{
-			this.solution = true;
-		}
-		return randIndex;
-
-	}
-}*/
 
 
 var World = function()
@@ -218,8 +136,7 @@ var World = function()
 	//number of cells high
 	this.height = 16;
 
-	// this.search = new search();
-
+	this.search = new Search();
 	
 	this.generateMap();
 	console.log("MAP INTIALIZED");
@@ -305,10 +222,9 @@ World.prototype.generateGoal = function()
 			if(endX == 0 || endY == 0 || endX == this.width-1 || endY == this.height-1)
 			{
 				notFound = true;
-				squares[endX][endY].draw(0xfff000)
+				squares[endX][endY].draw(0xfff000);
 
-
-				// this.search.findSolution(squares[startX][startY]);
+				this.search.findSolution();
 			}
 		}
 	}
@@ -396,6 +312,111 @@ World.prototype.moveTrain = function()
 		console.log("gameOver");
 	}
 	
+}
+
+
+var node = function(state, parent, stepCost)
+{
+	this.state = state;
+	this.parent = parent;
+	this.cost = stepCost;
+}
+
+var Search = function()
+{
+	this.fringe = [];
+	this.totalCost = 0;
+	this.solution = false;
+	this.cutoff = 1000;
+	this.counter = 0;
+
+	this.findSolution = function()
+	{
+		this.startNode = new node(squares[startX][startY], null, 0);
+		console.log(this.startNode);
+		AItracks[AItrackCounter] = startX;
+		AItracks[AItrackCounter+1] = startY;
+		AItrackCounter += 2;
+
+		this.fringe.push(this.startNode);
+
+		while(!this.solution && this.counter < this.cutoff)
+		{
+			var index = this.chooseFromFringe();
+			// var index = this.fringe.length-1;
+			var currentNode = this.fringe[index];
+			this.totalCost += currentNode.cost;
+			this.fringe[index].AIbuild = true;
+			// console.log(this.fringe.length);
+			AItracks[AItrackCounter] = currentNode.state.x;
+			AItracks[AItrackCounter+1] = currentNode.state.y;
+
+			if(currentNode.state.x == endX && currentNode.state.y == endY)
+			{
+				this.solution = true;
+				break;
+			}
+
+			//Checks to make sure that the new nodes won't be outside the array
+				if(currentNode.state.x-1 >= 0 && currentNode.state.y-1 >= 0){
+					//Adds these nodes to the fringe if it passes the first if statement
+					this.fringe.push(new node(squares[currentNode.state.x-1][currentNode.state.y-1],currentNode,squares[currentNode.state.x-1][currentNode.state.y-1].cost));
+					this.fringe.push(new node(squares[currentNode.state.x-1][currentNode.state.y],currentNode,squares[currentNode.state.x-1][currentNode.state.y].cost));
+					this.fringe.push(new node(squares[currentNode.state.x][currentNode.state.y-1],currentNode,squares[currentNode.state.x][currentNode.state.y-1].cost));
+					if(currentNode.state.x+1 <= this.width && currentNode.state.y+1 <= this.height)
+					{
+
+
+						//Adds these nodes to the fringe if it passes the second if statement
+						this.fringe.push(new node(squares[currentNode.state.x-1][currentNode.state.y+1],currentNode,squares[currentNode.state.x-1][currentNode.state.y+1].cost));
+						this.fringe.push(new node(squares[currentNode.state.x][currentNode.state.y+1],currentNode,squares[currentNode.state.x][currentNode.state.y+1].cost));
+						this.fringe.push(new node(squares[currentNode.state.x+1][currentNode.state.y],currentNode,squares[currentNode.state.x+1][currentNode.state.y].cost));
+						this.fringe.push(new node(squares[currentNode.state.x+1][currentNode.state.y-1],currentNode,squares[currentNode.state.x+1][currentNode.state.y-1].cost));
+						this.fringe.push(new node(squares[currentNode.state.x+1][currentNode.state.y+1],currentNode,squares[currentNode.state.x+1][currentNode.state.y+1].cost));
+					}
+					
+				}
+				
+			
+
+			this.counter++;
+			
+		}
+		if(this.solution)
+		{
+			console.log("SOLUTION FOUND");
+		}
+		console.log("TOTALCOST FOR THE AI: " + this.totalCost);
+	}
+
+	this.chooseFromFringe = function()
+	{
+		var INDEX = 0;
+		var min = 99;
+		for(var i = 0; i < this.fringe.length; i++)
+		{
+			if(areAdjacent(this.fringe[i].state.x, this.fringe[i].state.y, AItracks, AItrackCounter))
+			{
+				if(this.fringe[i].state.x == endX && this.fringe[i].state.y == endY)
+				{
+					return i;
+				}
+				else if(this.fringe[i].cost < min && !this.fringe[i].AIbuild)
+				{
+					INDEX = i;
+					min = this.fringe[i].cost;
+				}
+			}
+			else
+			{
+				this.fringe.splice(i,1);
+			}
+		}
+			return INDEX;
+
+	}
+
+
 }
 
 
