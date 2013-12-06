@@ -22,6 +22,7 @@ var lastX = 0;
 var lastY = 1;
 
 var gameOver = false;
+var gameWon = false;
 var stage = new PIXI.Stage(0x000000, true);
 var renderer = new PIXI.CanvasRenderer(1660, 830);
 stage.click = function(data)
@@ -33,7 +34,7 @@ stage.click = function(data)
 	{
 		if(indexX == endX && indexY == endY)
 		{
-			gameOver = true;
+			gameWon = true;
 			
 			
 		}
@@ -68,12 +69,7 @@ function animate() {
     }
     
     renderer.render(stage);
-    if(!gameOver)
-    {
-    	requestAnimFrame( animate );
-    	frameCount++;
-    }
-    else 
+    if(gameWon)
     {
 
 		// Add text.
@@ -87,6 +83,26 @@ function animate() {
 		// Render the stage.
 		renderer.render(stage);
 		console.log(playerCost);
+    	
+    }
+    else if(gameOver)
+    {
+    	// Add text.
+		var text = new PIXI.Text("YOU LOST TRY AGAIN NEXT TIME", {font: 'bold 40px Avro', fill: 'white', align: 'center'});
+		text.position = new PIXI.Point(renderer.width / 2, renderer.height / 2);
+		text.anchor = new PIXI.Point(0.5, 0.5);
+		graphics.beginFill(0x000000);
+		graphics.drawRect(0,0, renderer.width, renderer.height);
+		stage.addChild(text);
+
+		// Render the stage.
+		renderer.render(stage);
+		console.log(playerCost);
+    }
+    else 
+    {
+    	requestAnimFrame( animate );
+    	frameCount++;
     }          
 }
 
@@ -401,24 +417,25 @@ var Search = function()
 			}
 
 
-		for (var i = this.currentNode.state.x - 1; i <= this.currentNode.state.x + 1; i++) 
-		{
-			for (var j = this.currentNode.state.y - 1; j <= this.currentNode.state.y + 1; j++) 
+			for(var i = this.currentNode.state.x - 1; i <= this.currentNode.state.x + 1; i++) 
 			{
-				
-				if(!(this.currentNode.state.x == i && this.currentNode.state.y == j) && i >= 0 && i < 32 && j >= 0 && j < 16 && !squares[i][j].alreadyInFringe) 
-				{	
-		    		this.fringe.push(new node(squares[i][j],this.currentNode,squares[i][j].cost));
-		    		squares[i][j].alreadyInFringe = true;
-
-				}
-		 	}
-		}
+				for(var j = this.currentNode.state.y - 1; j <= this.currentNode.state.y + 1; j++) 
+				{
+					
+					if(!(this.currentNode.state.x == i && this.currentNode.state.y == j) && i >= 0 && i < 32 && j >= 0 && j < 16 && !squares[i][j].alreadyInFringe) 
+					{	
+			    		this.fringe.push(new node(squares[i][j],this.currentNode,squares[i][j].cost));
+			    		squares[i][j].alreadyInFringe = true;
+	
+						}
+				 	}
+			}
 				
 			
 			this.counter++;
 			
 		}
+
 		if(this.solution)
 		{
 			console.log("SOLUTION FOUND");
