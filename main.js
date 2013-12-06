@@ -120,6 +120,14 @@ var areAdjacent = function(X, Y, tracks, trackCounter)
 	}
 }
 
+var aiAdjacent = function(X1, Y1, X2, Y2)
+{
+	if(Math.abs(X1 - X2) <= 1 && Math.abs(Y1-Y2) <= 1)
+	{
+		return true;
+	}
+}
+
 
 
 
@@ -357,68 +365,52 @@ var Search = function()
 	this.fringe = [];
 	this.totalCost = 0;
 	this.solution = false;
-	this.cutoff = 1000;
+	this.cutoff = 10000;
 	this.counter = 0;
+	this.built = [];
+
 
 	this.findSolution = function()
 	{
 		this.startNode = new node(squares[startX][startY], null, 0);
 		console.log(this.startNode);
-		AItracks[AItrackCounter] = startX;
-		AItracks[AItrackCounter+1] = startY;
-		AItrackCounter += 2;
-
 		this.fringe.push(this.startNode);
+		squares[startX][startY].alreadyInFringe = true;
+		this.built.push(this.startNode);
 
-		while(!this.solution)
+		while(!this.solution && this.counter < this.cutoff)
 		{
-			var index = this.chooseFromFringe();
-			// var index = this.fringe.length-1;
-			var currentNode = this.fringe[index];
+			if(!this.currentNode)
+			{
+				var index = this.chooseFromFringe(this.startNode);
+			}
+			else
+			{
+				var index = this.chooseFromFringe(this.currentNode);
+			}
 			
-			if(currentNode.state.x == endX && currentNode.state.y == endY)
+			this.currentNode = this.fringe[index];
+			this.fringe[index].built = true;
+			this.built.push(this.currentNode);
+			
+			if(this.currentNode.state.x == endX && this.currentNode.state.y == endY)
 			{
 				this.solution = true;
+				this.totalCost = this.currentNode.costSoFar;
 				break;
 			}
 
-			//Checks to make sure that the new nodes won't be outside the array
-				/*if(currentNode.state.x-1 >= 0 && currentNode.state.y-1 >= 0){
-					//Adds these nodes to the fringe if it passes the first if statement
-					this.fringe.push(new node(squares[currentNode.state.x-1][currentNode.state.y-1],currentNode,squares[currentNode.state.x-1][currentNode.state.y-1].cost));
-					this.fringe.push(new node(squares[currentNode.state.x-1][currentNode.state.y],currentNode,squares[currentNode.state.x-1][currentNode.state.y].cost));
-					this.fringe.push(new node(squares[currentNode.state.x][currentNode.state.y-1],currentNode,squares[currentNode.state.x][currentNode.state.y-1].cost));
-					if(currentNode.state.x+1 <= this.width && currentNode.state.y+1 <= this.height)
-					{
 
-
-						//Adds these nodes to the fringe if it passes the second if statement
-						this.fringe.push(new node(squares[currentNode.state.x-1][currentNode.state.y+1],currentNode,squares[currentNode.state.x-1][currentNode.state.y+1].cost));
-						this.fringe.push(new node(squares[currentNode.state.x][currentNode.state.y+1],currentNode,squares[currentNode.state.x][currentNode.state.y+1].cost));
-						this.fringe.push(new node(squares[currentNode.state.x+1][currentNode.state.y],currentNode,squares[currentNode.state.x+1][currentNode.state.y].cost));
-						this.fringe.push(new node(squares[currentNode.state.x+1][currentNode.state.y-1],currentNode,squares[currentNode.state.x+1][currentNode.state.y-1].cost));
-						this.fringe.push(new node(squares[currentNode.state.x+1][currentNode.state.y+1],currentNode,squares[currentNode.state.x+1][currentNode.state.y+1].cost));
-					}
-					
-				}*/
-
-		for (var i = currentNode.state.x - 1; i <= currentNode.state.x + 1; i++) 
+		for (var i = this.currentNode.state.x - 1; i <= this.currentNode.state.x + 1; i++) 
 		{
-			for (var j = currentNode.state.y - 1; j <= currentNode.state.y + 1; j++) 
+			for (var j = this.currentNode.state.y - 1; j <= this.currentNode.state.y + 1; j++) 
 			{
-				/*var alreadyInFringe = false;
-				console.log(this.fringe.length);
-				for (var k = 0; k < this.fringe.length; k++) 
-				{
-					if (this.fringe[k].state.x == i && this.fringe[k].state.y == j) 
-					{
-		        		alreadyInFringe = true;
-					}
-				}*/
-				if(!(currentNode.state.x == i && currentNode.state.y == j) && i >= 0 && i < 32 && j >= 0 && j < 16 && !squares[i][j].alreadyInFringe) 
+				
+				if(!(this.currentNode.state.x == i && this.currentNode.state.y == j) && i >= 0 && i < 32 && j >= 0 && j < 16 && !squares[i][j].alreadyInFringe) 
 				{	
-		    		this.fringe.push(new node(squares[i][j],currentNode,squares[i][j].cost));
+		    		this.fringe.push(new node(squares[i][j],this.currentNode,squares[i][j].cost));
 		    		squares[i][j].alreadyInFringe = true;
+
 				}
 		 	}
 		}
@@ -430,18 +422,21 @@ var Search = function()
 		if(this.solution)
 		{
 			console.log("SOLUTION FOUND");
+			console.log("TOTALCOST FOR THE AI: " + (this.totalCost-5));
 		}
-		console.log("TOTALCOST FOR THE AI: " + this.totalCost);
+		console.log(this.built[this.built.length-1]);
+		console.log(this.built.length)
+		
 	}
 
-	this.chooseFromFringe = function()
+	this.chooseFromFringe = function(currentNode)
 	{
 		var INDEX = 0;
-		var min = this.fringe[1].aStarCost;
-		console.log(this.fringe.length);
+		var min = 99
 		for(var i = 0; i < this.fringe.length; i++)
 		{
-				if(this.fringe[i].aStarCost < min)
+				if(this.fringe[i].aStarCost < min && !this.fringe[i].built && aiAdjacent(this.built[this.built.length-1].state.x, this.built[this.built.length-1].state.y, this.fringe[i].state.x, this.fringe[i].state.y)
+					&& this.fringe[i].parent == this.built[this.built.length-1])
 				{
 					INDEX = i;
 					min = this.fringe[i].aStarCost;
