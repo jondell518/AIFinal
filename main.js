@@ -35,6 +35,7 @@ stage.click = function(data)
 		if(indexX == endX && indexY == endY)
 		{
 			gameWon = true;
+			playerCost += squares[indexX][indexY].cost;
 			
 			
 		}
@@ -156,22 +157,25 @@ var World = function()
 	this.types = [0,1,2,3];
 
 	//number of cells wide
-	this.width = 32;
+	this.width = 8;
 
 	//number of cells high
-	this.height = 16;
+	this.height = 4;
 
-	this.search = new Search();
+	
 	
 	this.generateMap();
 	console.log("MAP INTIALIZED");
 	console.log("MAP DRAWN");
 	this.generateStart();
+
+	this.search = new Search();
 	tracks[trackCounter] = startX;
 	tracks[trackCounter+1] = startY;
 	trackCounter+=2;
 	this.drawMap();
 	this.generateGoal();
+	this.search.findSolution();
 	
 	console.log("START AND END GENERATED");
 }
@@ -193,12 +197,12 @@ World.prototype.generateMap = function()
 	//generate 20 blocks of each type of tile, rest are flat
 	for(var i =0; i< 20; i++)
 	{
-		var waterX = Math.floor(Math.random()*32);
-		var waterY = Math.floor(Math.random()*16);
-		var mountainX = Math.floor(Math.random()*32);
-		var mountainY = Math.floor(Math.random()*16);
-		var forestX = Math.floor(Math.random()*32);
-		var forestY = Math.floor(Math.random()*16);
+		var waterX = Math.floor(Math.random()*this.width);
+		var waterY = Math.floor(Math.random()*this.height);
+		var mountainX = Math.floor(Math.random()*this.width);
+		var mountainY = Math.floor(Math.random()*this.height);
+		var forestX = Math.floor(Math.random()*this.width);
+		var forestY = Math.floor(Math.random()*this.height);
 
 		squares[waterX][waterY].type = 3;
 		this.addTiles(waterX,waterY,3);
@@ -239,8 +243,8 @@ World.prototype.generateGoal = function()
 	var notFound = false;
 	while(!notFound)
 	{
-		endX = Math.floor(Math.random()*32);
-		endY = Math.floor(Math.random()*16);
+		endX = Math.floor(Math.random()*this.width);
+		endY = Math.floor(Math.random()*this.height);
 
 		if(endX != startX && endY != startY)
 		{
@@ -249,7 +253,7 @@ World.prototype.generateGoal = function()
 				notFound = true;
 				squares[endX][endY].draw(0xfff000);
 
-				this.search.findSolution();
+				
 			}
 		}
 	}
@@ -297,7 +301,7 @@ World.prototype.drawMap = function()
 
 World.prototype.addTiles = function(X,Y,type)
 {
-	if(X > 0 && X < 31 && Y > 0 && Y < 15)
+	if(X > 0 && X < 7 && Y > 0 && Y < 3)
 	{
 		squares[X-1][Y].type =type;
 		squares[X-1][Y-1].type = type;
@@ -376,13 +380,14 @@ var node = function(state, parent, stepCost)
 
 }
 
+
 var Search = function()
 {
 	this.fringe = [];
 	this.expanded = [];
 	this.totalCost = 0;
 	this.solution = false;
-	this.cutoff = 10000;
+	this.cutoff = 50000;
 	this.counter = 0;
 	this.built = [];
 
@@ -400,12 +405,13 @@ var Search = function()
 			
 			this.currentNode = this.fringe[index];
 			this.fringe.splice(index,1);
-			// this.built.push(this.currentNode);
+			this.built.push(this.currentNode);
 			
 			if(this.currentNode.state.x == endX && this.currentNode.state.y == endY)
 			{
 				this.solution = true;
 				this.totalCost = this.currentNode.costSoFar;
+				console.log(this.currentNode);
 				break;
 			}
 
@@ -414,8 +420,9 @@ var Search = function()
 			{
 				for(var j = this.currentNode.state.y - 1; j <= this.currentNode.state.y + 1; j++) 
 				{
+					// var tempNode = new node(squares[i][j], this.currentNode, squares[i][j].cost);
 					
-					if(!(this.currentNode.state.x == i && this.currentNode.state.y == j) && i >= 0 && i < 32 && j >= 0 && j < 16 && !this.alreadyInFringe(this.currentNode, i, j)) 
+					if(!(this.currentNode.state.x == i && this.currentNode.state.y == j) && i >= 0 && i < 8 && j >= 0 && j < 4 && !this.alreadyInFringe(new node(squares[i][j], this.currentNode, squares[i][j].cost))) 
 					{	
 			    		this.fringe.push(new node(squares[i][j],this.currentNode,squares[i][j].cost));
 					}
@@ -430,51 +437,35 @@ var Search = function()
 		if(this.solution)
 		{
 			console.log("SOLUTION FOUND");
-			console.log("TOTALCOST FOR THE AI: " + (this.totalCost-5));
+			console.log("TOTALCOST FOR THE AI: " + this.totalCost);
 		}
 		// console.log(this.built[this.built.length-1]);
-		// console.log(this.built.length)
+		console.log(this.built.length);
 		
 	}
 
 	this.chooseFromFringe = function()
 	{
-		var INDEX = 0;
-		var min = this.fringe[0];
-		for(var i = 0; i < this.fringe.length; i++)
-		{
-			if(this.fringe[i].aStarCost < min)
-			{
-				INDEX = i;
-				min = this.fringe[i].aStarCost;
-			}
-		}
+		//Sorts the array so that the smallest astar cost is the first element, then returns 0
+		this.fringe.sort(function(a,b){return a.aStarCost-b.aStarCost});
 			
 		
-			return INDEX;
+		return 0;
 	}
 
-	this.alreadyInFringe = function(currentNode, x, y)
+	//loops through the fringe, checks to make sure this exact node is not already present
+	//two nodes are identical if there astar costs are the same, as they must have the same cost to get there
+	this.alreadyInFringe = function(tempNode)	
 	{
-		var node = currentNode;
-
-		while(node.parent != null)
+		for(var i = 0; i < this.fringe.length; i++)
 		{
-
-			if(node.parent.state.x == x && node.parent.state.y == y && node.parent == node)
+			if(this.fringe[i].aStarCost == tempNode.aStarCost)
 			{
 				return true;
 			}
-			else
-			{
-				node = node.parent;
-			}
-
 		}
 		return false;
-
-
-	}	
+	}
 }
 
 
