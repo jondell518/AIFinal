@@ -51,6 +51,8 @@ stage.click = function(data)
 		
 	}
 }
+
+
         
       
         
@@ -74,7 +76,7 @@ function animate() {
     {
 
 		// Add text.
-		var text = new PIXI.Text("YOU WON YOUR TOTAL COST WAS: $" + playerCost, {font: 'bold 40px Avro', fill: 'white', align: 'center'});
+		var text = new PIXI.Text("YOU WON YOUR TOTAL COST WAS: $" + playerCost + "\n" + "THE BEST COST WAS: $" + world.search.solutionNode.costSoFar, {font: 'bold 40px Avro', fill: 'white', align: 'center'});
 		text.position = new PIXI.Point(renderer.width / 2, renderer.height / 2);
 		text.anchor = new PIXI.Point(0.5, 0.5);
 		graphics.beginFill(0x000000);
@@ -151,16 +153,20 @@ var aiAdjacent = function(X1, Y1, X2, Y2)
 
 var World = function()
 {
+
+	this.showAI = false;
+	this.showAI = confirm("Show the AI Solution?"); 
+	
 	//Sets up the world, by generating a random map
 
 	//0 is flat, 2 is mountain, 3 is water, 1 is forest
 	this.types = [0,1,2,3];
 
 	//number of cells wide
-	this.width = 8;
+	this.width = 32;
 
 	//number of cells high
-	this.height = 4;
+	this.height = 16;
 
 	
 	
@@ -175,9 +181,17 @@ var World = function()
 	trackCounter+=2;
 	this.drawMap();
 	this.generateGoal();
+
+	
 	this.search.findSolution();
+
+	if(this.showAI)
+	{
+		this.drawAIsolution(this.search.solutionNode);
+	}
 	
 	console.log("START AND END GENERATED");
+	
 }
 
 World.prototype.generateMap = function()
@@ -301,7 +315,7 @@ World.prototype.drawMap = function()
 
 World.prototype.addTiles = function(X,Y,type)
 {
-	if(X > 0 && X < 7 && Y > 0 && Y < 3)
+	if(X > 0 && X < this.width-1 && Y > 0 && Y < this.height-1)
 	{
 		squares[X-1][Y].type =type;
 		squares[X-1][Y-1].type = type;
@@ -340,6 +354,17 @@ World.prototype.moveTrain = function()
 		console.log("gameOver");
 	}
 	
+}
+
+World.prototype.drawAIsolution = function(solution)
+{
+	
+	while(solution.parent != null)
+	{
+		squares[solution.state.x][solution.state.y].type = 4;
+		squares[solution.state.x][solution.state.y].draw(0x838B8B);
+		solution = solution.parent;
+	}
 }
 
 
@@ -390,6 +415,7 @@ var Search = function()
 	this.cutoff = 50000;
 	this.counter = 0;
 	this.built = [];
+	this.solutionNode = null;
 
 
 	this.findSolution = function()
@@ -397,21 +423,28 @@ var Search = function()
 		this.startNode = new node(squares[startX][startY], null, 0);
 		console.log(this.startNode);
 		this.fringe.push(this.startNode);
-		// this.built.push(this.startNode);
 
-		while(!this.solution && this.counter < this.cutoff)
+		while(this.fringe.length > 0)
 		{
 			var index = this.chooseFromFringe();
 			
 			this.currentNode = this.fringe[index];
 			this.fringe.splice(index,1);
-			this.built.push(this.currentNode);
 			
 			if(this.currentNode.state.x == endX && this.currentNode.state.y == endY)
 			{
 				this.solution = true;
 				this.totalCost = this.currentNode.costSoFar;
 				console.log(this.currentNode);
+				this.solutionNode = this.currentNode;
+				break;
+			}
+			else if(Math.abs(this.currentNode.state.x-endX) == 1 && Math.abs(this.currentNode.state.y - endY) == 1)
+			{
+				console.log("NEXT TO GOAL!");
+				console.log("PROCEEDING TO GOAL");
+				this.solution = true;
+				this.solutionNode = new node(squares[endX][endY],this.currentNode, squares[endX][endY].cost);
 				break;
 			}
 
@@ -419,10 +452,8 @@ var Search = function()
 			for(var i = this.currentNode.state.x - 1; i <= this.currentNode.state.x + 1; i++) 
 			{
 				for(var j = this.currentNode.state.y - 1; j <= this.currentNode.state.y + 1; j++) 
-				{
-					// var tempNode = new node(squares[i][j], this.currentNode, squares[i][j].cost);
-					
-					if(!(this.currentNode.state.x == i && this.currentNode.state.y == j) && i >= 0 && i < 8 && j >= 0 && j < 4 && !this.alreadyInFringe(new node(squares[i][j], this.currentNode, squares[i][j].cost))) 
+				{					
+					if(!(this.currentNode.state.x == i && this.currentNode.state.y == j) && i >= 0 && i < 32 && j >= 0 && j < 16 && !this.alreadyInFringe(new node(squares[i][j], this.currentNode, squares[i][j].cost))) 
 					{	
 			    		this.fringe.push(new node(squares[i][j],this.currentNode,squares[i][j].cost));
 					}
@@ -439,9 +470,6 @@ var Search = function()
 			console.log("SOLUTION FOUND");
 			console.log("TOTALCOST FOR THE AI: " + this.totalCost);
 		}
-		// console.log(this.built[this.built.length-1]);
-		console.log(this.built.length);
-		
 	}
 
 	this.chooseFromFringe = function()
@@ -454,7 +482,7 @@ var Search = function()
 	}
 
 	//loops through the fringe, checks to make sure this exact node is not already present
-	//two nodes are identical if there astar costs are the same, as they must have the same cost to get there
+	//two nodes are identical if there astar costs are the same, as they must have the same cost to get there and to the goal
 	this.alreadyInFringe = function(tempNode)	
 	{
 		for(var i = 0; i < this.fringe.length; i++)
