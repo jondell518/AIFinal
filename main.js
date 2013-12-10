@@ -76,7 +76,7 @@ function animate() {
     {
 
 		// Add text.
-		var text = new PIXI.Text("YOU WON YOUR TOTAL COST WAS: $" + playerCost + "\n" + "THE BEST COST WAS: $" + world.search.solutionNode.costSoFar, {font: 'bold 40px Avro', fill: 'white', align: 'center'});
+		var text = new PIXI.Text("YOU WON YOUR TOTAL COST WAS: $" + playerCost + "\n" + "THE AI's TOTAL COST WAS: $" + world.search.solutionNode.costSoFar, {font: 'bold 40px Avro', fill: 'white', align: 'center'});
 		text.position = new PIXI.Point(renderer.width / 2, renderer.height / 2);
 		text.anchor = new PIXI.Point(0.5, 0.5);
 		graphics.beginFill(0x000000);
@@ -168,13 +168,10 @@ var World = function()
 	//number of cells high
 	this.height = 16;
 
-	
-	
 	this.generateMap();
 	console.log("MAP INTIALIZED");
 	console.log("MAP DRAWN");
 	this.generateStart();
-
 	this.search = new Search();
 	tracks[trackCounter] = startX;
 	tracks[trackCounter+1] = startY;
